@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, ops::RangeInclusive};
 
 pub fn run() {
     let filename = "./src/day_5/input.txt";
@@ -9,41 +9,38 @@ pub fn run() {
 
     let maps = parse_maps(lines);
 
-    let mut min_location = std::i64::MAX;
-    for seed_pair in input_seed_pairs {
-        println!(
-            "Processing seed pair: from {} to {}",
-            seed_pair.from, seed_pair.to
-        );
-        println!("Current min location: {:?}", min_location);
-        for seed in seed_pair.from..=seed_pair.to {
-            let soil = traverse_map(seed, maps.get("seed-to-soil").unwrap());
-            let fertiliser = traverse_map(soil, maps.get("soil-to-fertilizer").unwrap());
-            let water = traverse_map(fertiliser, maps.get("fertilizer-to-water").unwrap());
-            let light = traverse_map(water, maps.get("water-to-light").unwrap());
-            let temperature = traverse_map(light, maps.get("light-to-temperature").unwrap());
-            let humidity = traverse_map(temperature, maps.get("temperature-to-humidity").unwrap());
-            let location = traverse_map(humidity, maps.get("humidity-to-location").unwrap());
-            if location < min_location {
-                min_location = location;
+    for location in 0..std::i64::MAX {
+        let humidity = reverse_traverse_map(location, maps.get("humidity-to-location").unwrap());
+        let temperature =
+            reverse_traverse_map(humidity, maps.get("temperature-to-humidity").unwrap());
+        let light = reverse_traverse_map(temperature, maps.get("light-to-temperature").unwrap());
+        let water = reverse_traverse_map(light, maps.get("water-to-light").unwrap());
+        let fertiliser = reverse_traverse_map(water, maps.get("fertilizer-to-water").unwrap());
+        let soil = reverse_traverse_map(fertiliser, maps.get("soil-to-fertilizer").unwrap());
+        let seed = reverse_traverse_map(soil, maps.get("seed-to-soil").unwrap());
+
+        for seed_pair in &input_seed_pairs {
+            if seed_pair.contains(&seed) {
+                println!("The answer is: {:?}", location);
+                return;
             }
         }
     }
 
-    println!("The answer is: {:?}", min_location);
+    println!("Could not find answer");
 }
 
-fn traverse_map(source: i64, map_lines: &Vec<MapLine>) -> i64 {
+fn reverse_traverse_map(destination: i64, map_lines: &Vec<MapLine>) -> i64 {
     for line in map_lines {
-        if (source >= line.source) && (source <= line.source + line.range) {
-            return line.destination + (source - line.source);
+        if (destination >= line.destination) && (destination < line.destination + line.range) {
+            return line.source + (destination - line.destination);
         }
     }
 
-    return source;
+    return destination;
 }
 
-fn parse_seeds(line: &str) -> Vec<SeedPair> {
+fn parse_seeds(line: &str) -> Vec<RangeInclusive<i64>> {
     let seed_pairs_full_string = line.replace("seeds: ", "");
     let seed_pairs_string = seed_pairs_full_string
         .split_whitespace()
@@ -53,14 +50,9 @@ fn parse_seeds(line: &str) -> Vec<SeedPair> {
         .map(|s| s.trim().parse::<i64>().unwrap())
         .collect::<Vec<i64>>();
 
-    let mut seed_pairs: Vec<SeedPair> = Vec::new();
-    for i in 0..seed_pairs_flat.len() {
-        if i % 2 == 0 {
-            seed_pairs.push(SeedPair {
-                from: seed_pairs_flat[i],
-                to: seed_pairs_flat[i] + seed_pairs_flat[i + 1],
-            });
-        }
+    let mut seed_pairs: Vec<RangeInclusive<i64>> = Vec::new();
+    for i in (0..seed_pairs_flat.len()).step_by(2) {
+        seed_pairs.push(seed_pairs_flat[i]..=seed_pairs_flat[i] + seed_pairs_flat[i + 1] - 1);
     }
 
     return seed_pairs;
@@ -103,9 +95,4 @@ struct MapLine {
     destination: i64,
     source: i64,
     range: i64,
-}
-
-struct SeedPair {
-    from: i64,
-    to: i64,
 }
