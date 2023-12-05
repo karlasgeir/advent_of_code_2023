@@ -1,4 +1,4 @@
-# Advent of Code 2023 - Rest implementation
+# Advent of Code 2023 - Rust implementation
 
 This repository contains my solutions for the Advent of Code 2023 challenges.
 
