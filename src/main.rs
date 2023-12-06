@@ -5,6 +5,7 @@ mod day_2;
 mod day_3;
 mod day_4;
 mod day_5;
+mod day_6;
 
 fn main() {
     let (day, part) = parse_args();
@@ -20,6 +21,8 @@ fn main() {
         ("4", "2") => day_4::part_2::run(),
         ("5", "1") => day_5::part_1::run(),
         ("5", "2") => day_5::part_2::run(),
+        ("6", "1") => day_6::part_1::run(),
+        ("6", "2") => day_6::part_2::run(),
         _ => println!("Invalid day or part"),
     }
 }
